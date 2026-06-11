@@ -43,10 +43,13 @@ export async function details({ product }) {
   // Стоит дополнительной секунды, зато всегда возвращает данные.
   const basePage = await fetchJson(path);
   let page2 = null;
+  const page2Url = `${path}?layout_container=pdpPage2column&layout_page_index=2`;
   try {
-    page2 = await fetchJson(`${path}?layout_container=pdpPage2column&layout_page_index=2`);
+    page2 = await fetchJson(page2Url);
   } catch (err) {
-    // page2 даёт только описание — если она не отдалась, не валим всю карточку.
+    // page2 даёт только описание. fetchJson внутри уже делает 1 retry на
+    // 403/307 с shutdown'ом сессии; если и второй раз не пришло — отдадим
+    // карточку без описания, чтобы не валить весь details.
     page2 = null;
   }
   return parseDetails(basePage, page2);
