@@ -1,0 +1,30 @@
+{
+  "name": "ozon-mcp-server",
+  "version": "0.3.0",
+  "description": "MCP-сервер для Ozon.ru. Форк eduard256/ozon-mcp-server с двумя минимальными правками: (1) headless: false + полный chromium (lite headless-shell палит Variti), (2) details — последовательные fetch вместо Promise.all (Variti режет два параллельных запроса на один продукт).",
+  "type": "module",
+  "bin": {
+    "ozon-mcp-server": "src/index.js"
+  },
+  "main": "src/index.js",
+  "scripts": {
+    "start": "node src/index.js"
+  },
+  "keywords": [
+    "mcp",
+    "ozon",
+    "marketplace",
+    "russia",
+    "playwright"
+  ],
+  "author": "Andrey Sergeyev (fork of eduard256/ozon-mcp-server)",
+  "license": "MIT",
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.6.1",
+    "playwright": "1.60.0",
+    "zod": "^3.25.0"
+  }
+}
