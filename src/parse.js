@@ -193,6 +193,29 @@ export function parseDescription(page2) {
   };
 }
 
+/**
+ * Таможенная пошлина для импортных товаров. Ozon показывает её отдельным
+ * блоком "webIconWithText" с href вида "/modal/customs-duty?product_id=...".
+ * Этот же widget используется и для других "иконка + текст" (доставка,
+ * гарантия, акции), поэтому отличаем именно по customs-duty или по слову
+ * "пошлин" в тексте.
+ */
+export function parseDuty(page) {
+  if (!page) return null;
+  const all = widgets(page, "webIconWithText");
+  for (const w of all) {
+    const blob = JSON.stringify(w);
+    if (!/customs-duty|пошлин/i.test(blob)) continue;
+    // Сумма пошлины — берём первое число с ₽ или "руб" в любом тексте widget'а.
+    const m = blob.match(/(\d[\d\s  ]*\d)\s*(?:₽|руб)/i);
+    if (!m) continue;
+    const amount = priceToNumber(m[1]);
+    if (!amount) continue;
+    return { amount, note: "пошлина не входит в цену" };
+  }
+  return null;
+}
+
 export function parseDetails(basePage, page2) {
   const heading = widget(basePage, "webProductHeading");
   const price = widget(basePage, "webPrice");
@@ -221,13 +244,23 @@ export function parseDetails(basePage, page2) {
     if (typeof src === "string") images.push(src);
   }
 
+  const priceCard = priceToNumber(price?.cardPrice) ?? priceToNumber(price?.price);
+  const duty = parseDuty(basePage);
+
   return {
     sku,
     name: heading?.title || basePage?.seo?.title || null,
     url,
-    price: priceToNumber(price?.cardPrice) ?? priceToNumber(price?.price),
+    price: priceCard,
     priceRegular: priceToNumber(price?.price),
     oldPrice: priceToNumber(price?.originalPrice),
+    duty: duty
+      ? {
+          amount: duty.amount,
+          total: priceCard ? priceCard + duty.amount : null,
+          note: duty.note,
+        }
+      : null,
     available: price?.isAvailable ?? null,
     rating,
     reviews,
@@ -274,4 +307,4 @@ export function parseReviews(page, limit = 10) {
   return { rating, totalReviews: total, count: reviews.length, reviews };
 }
 
-export const _internal = { priceToNumber, cleanUrl, skuFromUrl, widget };
+export const _internal = { priceToNumber, cleanUrl, skuFromUrl, widget, parseDuty };
